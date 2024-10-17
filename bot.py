@@ -1,82 +1,120 @@
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+import logging
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters
+import os
 
-# Ton token Telegram intégré directement (mais ce n'est pas sécurisé)
+# Configuration des logs
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+
+# Ton token Telegram
 TOKEN = '7832805626:AAHozawaqhUr9TsGqPpL-kkA3JDfOXBfNCw'
 
-# Fonction pour le message de bienvenue
-def start(update: Update, context: CallbackContext):
-    welcome_message = (
-        "YOSH ! I can extract and download for you photos/images/files/archives from Youtube, Instagram, "
-        "TikTok, Facebook, Vimeo, Twitter posts and video hostings. "
-        "Just send me an URL to post with media or direct link."
-    )
-    update.message.reply_text(welcome_message)
+# IDs des canaux Telegram
+CHANNEL_1 = '@diverson206'
+CHANNEL_2 = '@warriorsquad001'
 
-# Fonction pour gérer les fichiers téléchargés (fichiers provenant du bot ou du site)
-def handle_files(update: Update, context: CallbackContext):
-    keyboard = [
-        [InlineKeyboardButton("From Bot", callback_data='from_bot')],
-        [InlineKeyboardButton("From Site", callback_data='from_site')],
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text("Choose where to see your files:", reply_markup=reply_markup)
+# Fonction pour vérifier si un utilisateur est membre des canaux
+async def check_subscription(user_id, bot):
+    try:
+        member_status1 = await bot.get_chat_member(CHANNEL_1, user_id)
+        member_status2 = await bot.get_chat_member(CHANNEL_2, user_id)
 
-# Fonction pour envoyer vers le site pour télécharger les mangas et webtoons
-def download_webtoon_manga(update: Update, context: CallbackContext):
-    keyboard = [
-        [InlineKeyboardButton("Visit the website", url="https://tonsite.vercel.app/")]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text("Go to the site to download Webtoons or Manga:", reply_markup=reply_markup)
+        if member_status1.status in ['member', 'administrator', 'creator'] and member_status2.status in ['member', 'administrator', 'creator']:
+            return True
+        else:
+            return False
+    except Exception as e:
+        logger.error(f"Error checking subscription: {e}")
+        return False
 
-# Fonction pour traiter les liens d'URL envoyés par les utilisateurs
-def download_media(update: Update, context: CallbackContext):
-    url = update.message.text
-    update.message.reply_text(f"Downloading media from: {url}")
+# Fonction de démarrage du bot avec les boutons et le message de bienvenue
+async def start(update: Update, context):
+    user_id = update.message.from_user.id
+    bot = context.bot
 
-# Fonction pour afficher les informations de contact
-def contact_us(update: Update, context: CallbackContext):
-    keyboard = [
-        [InlineKeyboardButton("Groupe Support", url="https://t.me/+hmsBjulzWGphMmQx")],
-        [InlineKeyboardButton("Channel", url="https://t.me/BOTSUPPORTSITE")],
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text("Contact us via the following:", reply_markup=reply_markup)
+    logger.info(f"/start command used by {user_id}")
 
-# Fonction pour afficher les instructions d'utilisation du bot
-def how_to_use(update: Update, context: CallbackContext):
-    update.message.reply_text("Here is how to use this bot: [How to use this bot](https://t.me/BOTSUPPORTSITE)")
+    if await check_subscription(user_id, bot):
+        keyboard = [
+            [InlineKeyboardButton("Your Files", callback_data='your_file')],
+            [InlineKeyboardButton("Contact Us", callback_data='contact_us')],
+            [InlineKeyboardButton("Download Webtoon/Manga", url="https://tonsiteweb.com")],
+            [InlineKeyboardButton("Website", url="https://tonsiteweb.com")],
+            [InlineKeyboardButton("Language", callback_data='language')],
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        await update.message.reply_text(
+            "YOSH! I can extract and download photos/images/files/archives from YouTube, Instagram, TikTok, Facebook, Vimeo, Twitter, and 1000+ video hosting sites. Just send me an URL or a direct link.",
+            reply_markup=reply_markup
+        )
+    else:
+        keyboard = [
+            [InlineKeyboardButton("Join Bot Channel", url="https://t.me/diverson206")],
+            [InlineKeyboardButton("Join Group", url="https://t.me/warriorsquad001")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        await update.message.reply_text(
+            "You need to join the following channels to use this bot:\n\n"
+            "- [Join Bot Channel](https://t.me/diverson206)\n"
+            "- [Join Group](https://t.me/warriorsquad001)\n\n"
+            "After joining, use the /start command again.",
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
+        )
+
+# Fonction pour gérer les boutons
+async def button(update: Update, context):
+    query = update.callback_query
+    await query.answer()
+
+    logger.info(f"Button clicked: {query.data}")
+
+    if query.data == 'your_file':
+        keyboard = [
+            [InlineKeyboardButton("From Bot", callback_data='from_bot')],
+            [InlineKeyboardButton("From Site", callback_data='from_site')],
+            [InlineKeyboardButton("Back", callback_data='back')]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(text="Here you can get all your downloaded files", reply_markup=reply_markup)
+
+    elif query.data == 'contact_us':
+        keyboard = [
+            [InlineKeyboardButton("Support Group", url="https://t.me/+hmsBjulzWGphMmQx")],
+            [InlineKeyboardButton("CHANNEL SUPPORT", url="https://t.me/BOTSUPPORTSITE")],
+            [InlineKeyboardButton("How to use this Bot", url="https://telegra.ph/THE-BOT-10-17")],
+            [InlineKeyboardButton("Back", callback_data='back')]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(text="📬 Technical support and news\nCHANNEL: @BOTSUPPORTSITE\nSupport group: @techbotit\nYou are welcome to join!", reply_markup=reply_markup)
+
+    elif query.data == 'language':
+        await query.edit_message_text(text="Choose your language: English, Français, etc.")
+    
+    elif query.data == 'back':
+        await start(update, context)
 
 # Fonction principale pour démarrer le bot
-def main():
-    # Initialisation du bot avec le token
-    updater = Updater(TOKEN)
+async def main():
+    application = Application.builder().token(TOKEN).build()
 
-    # Dispatcher pour enregistrer les handlers
-    dp = updater.dispatcher
+    # Commande /start
+    application.add_handler(CommandHandler("start", start))
 
-    # Commande /start pour démarrer le bot
-    dp.add_handler(CommandHandler("start", start))
+    # Gérer les clics sur les boutons
+    application.add_handler(CallbackQueryHandler(button))
 
-    # Commande /files pour afficher les fichiers téléchargés
-    dp.add_handler(CommandHandler("files", handle_files))
-
-    # Commande /webtoon pour rediriger vers le site pour les webtoons
-    dp.add_handler(CommandHandler("webtoon", download_webtoon_manga))
-
-    # Commande /contact pour afficher les informations de contact
-    dp.add_handler(CommandHandler("contact", contact_us))
-
-    # Commande /howto pour afficher les instructions d'utilisation
-    dp.add_handler(CommandHandler("howto", how_to_use))
-
-    # Gestion des URLs envoyées par les utilisateurs
-    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, download_media))
-
-    # Démarre le bot
-    updater.start_polling()
-    updater.idle()
+    # Initialisation et démarrage du bot
+    logger.info("The bot is starting and running...")
+    await application.start()
+    await application.run_polling()
 
 if __name__ == '__main__':
-    main()
+    import asyncio
+    asyncio.run(main())
