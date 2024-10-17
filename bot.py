@@ -116,13 +116,13 @@ async def main():
     # Create the Application and pass your bot's token
     application = Application.builder().token(TOKEN).build()
 
-    # Add command and button handlers
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CallbackQueryHandler(button))
-
     # Initialize the application
     logger.info("Bot is initializing...")
     await application.initialize()
+
+    # Add command and button handlers
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CallbackQueryHandler(button))
 
     # Start the bot
     logger.info("Bot is starting...")
