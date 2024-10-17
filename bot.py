@@ -131,6 +131,9 @@ async def download_content(update: Update, context):
 async def main():
     application = Application.builder().token(TOKEN).build()
 
+    # Initialisation correcte de l'application
+    await application.initialize()
+
     # Commande /start
     application.add_handler(CommandHandler("start", start))
 
@@ -140,9 +143,8 @@ async def main():
     # Gérer les clics sur les boutons
     application.add_handler(CallbackQueryHandler(button))
 
-    # Initialisation et démarrage du bot
+    # Démarrage de l'application
     logger.info("The bot is starting and running...")
-    await application.initialize()
     await application.start()
     await application.updater.start_polling()
     await application.stop()
