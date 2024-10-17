@@ -116,20 +116,23 @@ async def main():
     # Create the Application and pass your bot's token
     application = Application.builder().token(TOKEN).build()
 
-    # Initialize the application
-    logger.info("Bot is initializing...")
-    await application.initialize()  # Ensure we initialize properly
-
     # Add command and button handlers
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CallbackQueryHandler(button))
+
+    # Initialize the application
+    logger.info("Bot is initializing...")
+    await application.initialize()
 
     # Start the bot
     logger.info("Bot is starting...")
     await application.start()
 
-    # Run polling
+    # Run polling to listen to updates
     await application.run_polling()
+
+    # Stop the bot when it's done
+    await application.stop()
 
 if __name__ == '__main__':
     import asyncio
