@@ -143,8 +143,8 @@ async def main():
     # Démarrage de l'application
     logger.info("The bot is starting and running...")
     await application.initialize()  # Ajout de l'initialisation ici
-    await application.start()  # start_polling is not needed
-    await application.updater.start_polling()  # Ajoute le polling
+    await application.start()
+    await application.start_polling()  # Ajoute le polling
 
 if __name__ == '__main__':
     import asyncio
