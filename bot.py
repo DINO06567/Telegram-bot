@@ -120,7 +120,8 @@ async def main():
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CallbackQueryHandler(button))
 
-    # Start polling updates
+    # Initialize and run the bot
+    logger.info("Bot is starting...")
     await application.initialize()
     await application.start()
     await application.run_polling()
