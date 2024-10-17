@@ -3,21 +3,21 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler
 import os
 
-# Setting up logging
+# Configuration des logs
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
 
-# Your Telegram bot token
+# Ton token Telegram
 TOKEN = '7897628824:AAGL-WQl8PAUQ1TJBeMd2EOMI1No6fDbNgY'
 
-# Telegram channel IDs
+# IDs des canaux Telegram
 CHANNEL_1 = '@diverson206'
 CHANNEL_2 = '@warriorsquad001'
 
-# Function to check if the user is a member of the channels
+# Fonction pour vérifier si un utilisateur est membre des canaux
 async def check_subscription(user_id, bot):
     try:
         member_status1 = await bot.get_chat_member(CHANNEL_1, user_id)
@@ -28,22 +28,22 @@ async def check_subscription(user_id, bot):
         else:
             return False
     except Exception as e:
-        logger.error(f"Error checking subscription: {e}")
+        logger.error(f"Erreur lors de la vérification de l'abonnement : {e}")
         return False
 
-# Start function with welcome message and buttons
+# Fonction de démarrage avec message de bienvenue et boutons
 async def start(update: Update, context):
     user_id = update.message.from_user.id
     bot = context.bot
 
-    logger.info(f"/start command used by {user_id}")
+    logger.info(f"Commande /start utilisée par {user_id}")
 
     if await check_subscription(user_id, bot):
         keyboard = [
             [InlineKeyboardButton("📂 Your File", callback_data='your_file')],
             [InlineKeyboardButton("📬 Contact Us", callback_data='contact_us')],
-            [InlineKeyboardButton("📥 Download Webtoon/Manga", url="https://yourwebsite.com")],
-            [InlineKeyboardButton("🌍 Website", url="https://yourwebsite.com")],
+            [InlineKeyboardButton("📥 Download Webtoon/Manga", url="https://tonsiteweb.com")],
+            [InlineKeyboardButton("🌍 Website", url="https://tonsiteweb.com")],
             [InlineKeyboardButton("🌐 Language", callback_data='language')],
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -68,12 +68,12 @@ async def start(update: Update, context):
             parse_mode='Markdown'
         )
 
-# Function to handle button clicks
+# Fonction pour gérer les boutons
 async def button(update: Update, context):
     query = update.callback_query
     await query.answer()
 
-    logger.info(f"Button clicked: {query.data}")
+    logger.info(f"Bouton cliqué : {query.data}")
 
     if query.data == 'your_file':
         keyboard = [
@@ -95,21 +95,21 @@ async def button(update: Update, context):
     elif query.data == 'language':
         await query.edit_message_text(text="🌐 Choose your language: English, Français, etc.")
 
-# Main function to start the bot
+# Fonction principale pour démarrer le bot
 async def main():
     application = Application.builder().token(TOKEN).build()
 
-    # Initialize the application
+    # Initialisation
     await application.initialize()
 
-    # /start command
+    # Ajout de la commande /start
     application.add_handler(CommandHandler("start", start))
 
-    # Handle button clicks
+    # Gestion des clics sur les boutons
     application.add_handler(CallbackQueryHandler(button))
 
-    # Start polling
-    logger.info("The bot is starting and running...")
+    # Démarrage du bot
+    logger.info("Le bot démarre et est en cours d'exécution...")
     await application.start()
     await application.run_polling()
 
