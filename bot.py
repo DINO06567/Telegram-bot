@@ -118,7 +118,7 @@ async def main():
 
     # Initialize the application
     logger.info("Bot is initializing...")
-    await application.initialize()
+    await application.initialize()  # Ensure we initialize properly
 
     # Add command and button handlers
     application.add_handler(CommandHandler("start", start))
