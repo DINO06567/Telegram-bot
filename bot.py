@@ -1,105 +1,108 @@
 import logging
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+import asyncio
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters
-import os
 
-# Enable logging
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
+# Logging setup
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Your token
-TOKEN = '7897628824:AAGL-WQl8PAUQ1TJBeMd2EOMI1No6fDbNgY'
+# Bot token
+TOKEN = "7897628824:AAGL-WQl8PAUQ1TJBeMd2EOMI1No6fDbNgY"
 
-# Channels IDs
-CHANNEL_1 = '@channel1'
-CHANNEL_2 = '@channel2'
-
-# Check if a user is subscribed to the channels
-async def check_subscription(user_id, bot):
-    try:
-        member_status1 = await bot.get_chat_member(CHANNEL_1, user_id)
-        member_status2 = await bot.get_chat_member(CHANNEL_2, user_id)
-
-        if member_status1.status in ['member', 'administrator', 'creator'] and member_status2.status in ['member', 'administrator', 'creator']:
-            return True
-        else:
-            return False
-    except Exception as e:
-        logger.error(f"Error checking subscription: {e}")
-        return False
-
-# /start command handler
+# Function to start the bot
 async def start(update: Update, context):
-    user_id = update.message.from_user.id
-    bot = context.bot
+    user = update.message.from_user
+    logger.info(f"/start command used by {user.id}")
 
-    logger.info(f"/start command used by {user_id}")
+    # Main Menu
+    keyboard = [
+        [InlineKeyboardButton("📁 Your Files", callback_data='files')],
+        [InlineKeyboardButton("📬 Contact Us", callback_data='contact')],
+        [InlineKeyboardButton("📥 Download Webtoon/Manga", url="https://webtoon-download-site.com")],
+        [InlineKeyboardButton("🌐 Website", url="https://webtoon-download-site.com")],
+        [InlineKeyboardButton("🌍 Language", callback_data='language')],
+        [InlineKeyboardButton("❓ How to Use this Bot", url="https://telegra.ph/THE-BOT-10-17")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text("Welcome! Choose an option:", reply_markup=reply_markup)
 
-    if await check_subscription(user_id, bot):
-        keyboard = [
-            [InlineKeyboardButton("Your File", callback_data='your_file')],
-            [InlineKeyboardButton("Contact Us", callback_data='contact_us')],
-            [InlineKeyboardButton("Download Webtoon/Manga", url="https://yoursite.com")],
-            [InlineKeyboardButton("Website", url="https://yoursite.com")],
-            [InlineKeyboardButton("Language", callback_data='language')],
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
+# Function for the 'Your Files' section
+async def your_files(update: Update, context):
+    keyboard = [
+        [InlineKeyboardButton("📥 From Bot", callback_data='from_bot')],
+        [InlineKeyboardButton("🌐 From Site", callback_data='from_site')],
+        [InlineKeyboardButton("🗑 Delete Files", callback_data='delete_files')],
+        [InlineKeyboardButton("🔙 Back", callback_data='back')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.callback_query.message.edit_text("Here you can get all your downloaded files:", reply_markup=reply_markup)
 
-        await update.message.reply_text(
-            "Welcome! I can help you download media from various platforms. Just send me a URL!",
-            reply_markup=reply_markup
-        )
-    else:
-        keyboard = [
-            [InlineKeyboardButton("Join Bot Channel", url="https://t.me/channel1")],
-            [InlineKeyboardButton("Join Support Group", url="https://t.me/channel2")]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
+# Function for the 'Contact Us' section
+async def contact_us(update: Update, context):
+    keyboard = [
+        [InlineKeyboardButton("📢 CHANNEL SUPPORT", url="https://t.me/BOTSUPPORTSITE")],
+        [InlineKeyboardButton("💬 Support Group", url="https://t.me/techbotit")],
+        [InlineKeyboardButton("🔙 Back", callback_data='back')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.callback_query.message.edit_text("📬 Technical support and news:\nCHANNEL: @BOTSUPPORTSITE\nSupport Group: @techbotit\nYou are welcome to join!", reply_markup=reply_markup)
 
-        await update.message.reply_text(
-            "You must join these channels before using the bot:\n\n"
-            "- [Join Bot Channel](https://t.me/channel1)\n"
-            "- [Join Support Group](https://t.me/channel2)\n\n"
-            "After joining, use /start again.",
-            reply_markup=reply_markup,
-            parse_mode='Markdown'
-        )
+# Function for language selection
+async def language_selection(update: Update, context):
+    keyboard = [
+        [InlineKeyboardButton("🇬🇧 English", callback_data='lang_en')],
+        [InlineKeyboardButton("🇫🇷 Français", callback_data='lang_fr')],
+        [InlineKeyboardButton("🔙 Back", callback_data='back')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.callback_query.message.edit_text("Choose your language: English, Français, etc.", reply_markup=reply_markup)
+
+# Function to handle back button
+async def go_back(update: Update, context):
+    await start(update.callback_query, context)
+
+# Function to handle incoming messages with URLs
+async def handle_message(update: Update, context):
+    url = update.message.text
+    user = update.message.from_user
+    logger.info(f"URL received from {user.id}: {url}")
+    
+    # Simulate processing
+    await update.message.reply_text("⌛️ Your request is processing...")
+
+    # For now, we simulate download success
+    # Here you'd implement actual download logic using httpx or another tool
+
+    await update.message.reply_text(f"Download successful for: {url}")
 
 # Callback query handler
-async def button(update: Update, context):
+async def button_handler(update: Update, context):
     query = update.callback_query
     await query.answer()
 
-    if query.data == 'your_file':
-        await query.edit_message_text(text="Here you can get all your downloaded files.")
-
-    elif query.data == 'contact_us':
-        await query.edit_message_text(text="📬 Technical support and news\n"
-                                           "CHANNEL: @BOTSUPPORTSITE\n"
-                                           "Support group: @techbotit\n"
-                                           "You are welcome to join!")
-
+    if query.data == 'files':
+        await your_files(update, context)
+    elif query.data == 'contact':
+        await contact_us(update, context)
     elif query.data == 'language':
-        await query.edit_message_text(text="Choose your language: English, Français, etc.")
+        await language_selection(update, context)
+    elif query.data == 'back':
+        await go_back(update, context)
 
-# Main function
+# Main function to run the bot
 async def main():
-    # Initialize the application properly
+    # Initialize the application
     application = Application.builder().token(TOKEN).build()
 
-    # Register handlers
+    # Command and message handlers
     application.add_handler(CommandHandler("start", start))
-    application.add_handler(CallbackQueryHandler(button))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    application.add_handler(CallbackQueryHandler(button_handler))
 
     # Start the bot
-    logger.info("The bot is starting and running...")
     await application.start()
-    await application.updater.start_polling()
-    await application.stop()
+    await application.wait_for_shutdown()
 
 if __name__ == '__main__':
-    import asyncio
     asyncio.run(main())
