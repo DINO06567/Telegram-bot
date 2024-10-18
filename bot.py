@@ -129,6 +129,7 @@ async def download_content(update: Update, context):
 
 # Fonction principale pour démarrer le bot
 async def main():
+    # Initialiser l'application
     application = Application.builder().token(TOKEN).build()
 
     # Commande /start
@@ -140,11 +141,14 @@ async def main():
     # Gérer les clics sur les boutons
     application.add_handler(CallbackQueryHandler(button))
 
+    # Initialiser l'application avant de commencer
+    await application.initialize()
+
     # Démarrage de l'application
     logger.info("The bot is starting and running...")
-    await application.initialize()  # Ajout de l'initialisation ici
     await application.start()
-    await application.start_polling()  # Ajoute le polling
+    await application.start_polling()
+    await application.stop()
 
 if __name__ == '__main__':
     import asyncio
